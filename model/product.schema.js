@@ -13,7 +13,7 @@ const productSchema=new mongoose.Schema({
         type:String,
         required:true
     },
-    userid:{
+    shopid:{
         type:String,
         required:true
     },

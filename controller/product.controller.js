@@ -32,13 +32,12 @@ const updateProduct = async (req, res) => {
 
 
 let getProduct = async (req, res) => {
-  const userId = req.query.userid
+  const shopId = req.query.shopid
   try {
-    if (!userId) {
+    if (!shopId) {
       return res.status(400).json([]);
     }
-    let products = await Product.find({ userid: userId });
-    
+    let products = await Product.find({ shopid: shopId });
     if (products.length > 0) {
       res.send(products);
     } else {
