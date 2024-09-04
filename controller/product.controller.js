@@ -17,7 +17,9 @@ const updateProduct = async (req, res) => {
     const updatedData = req.body; // Get the updated product data from the request body
 
     // Find the product by ID and update it
-    let result = await Product.findByIdAndUpdate(productId, updatedData, { new: true });
+    let result = await Product.findByIdAndUpdate(productId, updatedData, {
+      new: true,
+    });
 
     if (!result) {
       return res.status(404).json({ result: "Product not found" });
@@ -30,21 +32,29 @@ const updateProduct = async (req, res) => {
   }
 };
 
-
 let getProduct = async (req, res) => {
-  const shopId = req.query.shopid
+  const shopId = req.headers['authorization'];
+  const productName = req.query.productname;
   try {
     if (!shopId) {
-      return res.status(400).json([]);
+      return res.status(400).json({ error: "Shop ID is required" });
     }
-    let products = await Product.find({ shopid: shopId });
+
+    let filter = { shopid: shopId };
+
+    if (productName) {
+      filter.productname = { $regex: productName, $options: "i" }; // Case-insensitive search
+    }
+    let products = await Product.find(filter);
+
     if (products.length > 0) {
       res.send(products);
     } else {
       res.send([]);
     }
   } catch (error) {
-    res.status(500).json([]);
+    console.error('Error fetching products:', error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -62,5 +72,5 @@ module.exports = {
   addProduct,
   getProduct,
   deleteProduct,
-  updateProduct
+  updateProduct,
 };

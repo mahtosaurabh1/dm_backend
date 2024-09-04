@@ -5,14 +5,6 @@ const productSchema=new mongoose.Schema({
         type:String,
         required:true
     },
-    productprice:{
-        type:String,
-        required:true
-    },
-    weight:{
-        type:String,
-        required:true
-    },
     shopid:{
         type:String,
         required:true
