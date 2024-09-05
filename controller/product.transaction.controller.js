@@ -1,8 +1,13 @@
 const productTransactionSchema = require("../model/produt.transaction.schema");
 
 let addproductTransaction = async (req, res) => {
+  const { productprice, weight } = req.body;
+  let updatedData = {
+    ...req.body,
+    transactionprice: productprice * weight,
+  };
   try {
-    let product = new productTransactionSchema(req.body);
+    let product = new productTransactionSchema(updatedData);
     let result = await product.save();
     result = result.toObject();
     res.send(result);
@@ -17,7 +22,11 @@ const updateproductTransaction = async (req, res) => {
     const updatedData = req.body; // Get the updated product data from the request body
 
     // Find the product by ID and update it
-    let result = await productTransactionSchema.findByIdAndUpdate(productTransactionId, updatedData, { new: true });
+    let result = await productTransactionSchema.findByIdAndUpdate(
+      productTransactionId,
+      updatedData,
+      { new: true }
+    );
 
     if (!result) {
       return res.status(404).json({ result: "Product not found" });
@@ -30,47 +39,59 @@ const updateproductTransaction = async (req, res) => {
   }
 };
 
-
 let getproductTransaction = async (req, res) => {
-  const shopId = req.headers['authorization'];
+  const shopId = req.headers["authorization"];
   const productName = req.query.productname;
   const transactionStatus = req.query.transactionstatus;
+  const deal = req.query.deal;
 
   try {
     if (!shopId) {
       return res.status(400).json({ error: "Shop ID is required" });
     }
-
     let filter = { shopid: shopId };
-
-    // Add product name filter if provided
     if (productName) {
       filter.productname = { $regex: productName, $options: "i" }; // Case-insensitive search
     }
-
-    // Add transaction status filter if provided
     if (transactionStatus) {
-      filter.transactionstatus = transactionStatus; // Assuming transactionstatus is stored as a string in the database
+      filter.transactionstatus = transactionStatus; 
     }
+    if (deal === "deal") {      
+      let products = await productTransactionSchema.aggregate([
+        {
+          $match:{
+            shopid: { $in: [`${shopId}`] }, 
+            transactionstatus:parseInt(transactionStatus)
+          }
+        },
+         {
+          $group: {
+             _id: "$productid",    
+            totalWeight: { $sum: "$weight" },
+            transactionstatus: { $first: "$transactionstatus" },
+            productname:{$first:"$productname"},
+            productid:{$first:"$productid"}
+          }}
+      ]);
 
-    let products = await productTransactionSchema.find(filter);
-
-    if (products.length > 0) {
-      res.send(products);
+      return res.send(products.length > 0 ? products : []);
     } else {
-      res.send([]);
+      // Handle the regular product fetch logic
+      let products = await productTransactionSchema.find(filter);
+      return res.send(products.length > 0 ? products : []);
     }
   } catch (error) {
-    console.error('Error fetching products:', error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Error fetching products:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
 
-
 let deleteproductTransaction = async (req, res) => {
   try {
-    const result = await productTransactionSchema.deleteOne({ _id: req.query.producttransactionid });
+    const result = await productTransactionSchema.deleteOne({
+      _id: req.query.producttransactionid,
+    });
     res.send(result);
   } catch {
     res.status(500).json({ result: "Internal server error" });
@@ -81,5 +102,5 @@ module.exports = {
   addproductTransaction,
   getproductTransaction,
   deleteproductTransaction,
-  updateproductTransaction
+  updateproductTransaction,
 };
