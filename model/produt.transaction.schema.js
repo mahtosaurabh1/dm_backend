@@ -1,16 +1,16 @@
 const mongoose=require('mongoose');
 
-const BuySellSchema=new mongoose.Schema({
+const productTransactionSchema=new mongoose.Schema({
     productname:{
         type:String,
         required:true
     },
     productprice:{
-        type:String,
+        type:Number,
         required:true
     },
     weight:{
-        type:String,
+        type:Number,
         required:true
     },
     productid:{
@@ -22,7 +22,7 @@ const BuySellSchema=new mongoose.Schema({
         required:true
     },
     transactionstatus:{
-        type:Boolean,
+        type:Number,
         required:true
     },
     createdAt:{
@@ -31,4 +31,4 @@ const BuySellSchema=new mongoose.Schema({
     }
 })
 
-module.exports=mongoose.model('buySellProducts',BuySellSchema);
+module.exports=mongoose.model('producttransaction',productTransactionSchema);
