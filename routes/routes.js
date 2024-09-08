@@ -21,6 +21,7 @@ const {
   updateproductTransaction,
   addproductTransaction,
 } = require("../controller/product.transaction.controller");
+const { addExpenses, getExpenses, deleteExpenses, updateExpenses } = require("../controller/expenses.controller");
 let router = express.Router();
 
 router.post("/register", registerControler);
@@ -39,5 +40,10 @@ router.post("/addProductTransaction", addproductTransaction);
 router.get("/getProductTransaction", getproductTransaction);
 router.delete("/deleteProductTransaction", deleteproductTransaction);
 router.patch("/updateProductTransaction", updateproductTransaction);
+
+router.post("/addexpenses", addExpenses);
+router.get("/getexpenses", getExpenses);
+router.delete("/deleteexpenses", deleteExpenses);
+router.patch("/updateExpanses", updateExpenses);
 
 module.exports = router;
