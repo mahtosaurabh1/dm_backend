@@ -1,11 +1,17 @@
 const Product = require("../model/product.schema");
 
 let addProduct = async (req, res) => {
+  const {productname}=req.body;
   try {
-    let user = new Product(req.body);
-    let result = await user.save();
-    result = result.toObject();
-    res.send(result);
+    const existingProduct = await Product.findOne({ productname });
+    if (existingProduct) {
+      return res.status(409).json({ result: "Product already existed" });
+    }else{
+      let product = new Product(req.body);
+      let result = await product.save();
+      result = result.toObject();
+      res.send(result);
+    }
   } catch (error) {
     res.status(500).json({ result: "Internal server error" });
   }

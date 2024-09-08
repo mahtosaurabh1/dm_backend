@@ -68,6 +68,7 @@ let getproductTransaction = async (req, res) => {
           $group: {
              _id: "$productid",    
             totalWeight: { $sum: "$weight" },
+            totalprice:{$sum:"$transactionprice"},
             transactionstatus: { $first: "$transactionstatus" },
             productname:{$first:"$productname"},
             productid:{$first:"$productid"}
