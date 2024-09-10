@@ -33,7 +33,7 @@ const updateExpenses = async (req, res) => {
 };
 
 let getExpenses = async (req, res) => {
-  const shopId = req.headers['authorization'];
+  const shopId = req.headers["authorization"];
   const expensesname = req.query.expensesname;
   try {
     if (!shopId) {
@@ -53,8 +53,45 @@ let getExpenses = async (req, res) => {
       res.send([]);
     }
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error("Error fetching products:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+let getTotalExpenses = async (req, res) => {
+  const shopId = req.headers["authorization"];
+
+  try {
+    if (!shopId) {
+      return res.status(400).json({ error: "Shop ID is required" });
+    }
+
+    let expenses = await Expenses.aggregate([
+      {
+        $match: {
+          shopid: "66dcac2b568179ae8b727f5a" // Filter by shopid
+        }
+      },
+      {
+        $group: {
+          _id: null, // No need to group by any field
+          totalExpenses: { $sum: "$expensesprice" } // Sum the expensesprice field
+        }
+      },
+      {
+        $project: {
+          _id: 0, // Exclude _id from the output
+          totalExpenses: 1 // Include totalExpenses in the output
+        }
+      }
+    ]);
+
+    const totalExpenses = expenses.length > 0 ? expenses[0].totalExpenses : 0;
+
+    return res.json({ totalExpenses });
+  } catch (error) {
+    console.error("Error fetching total expenses:", error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -73,4 +110,5 @@ module.exports = {
   getExpenses,
   deleteExpenses,
   updateExpenses,
+  getTotalExpenses
 };
