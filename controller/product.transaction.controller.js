@@ -17,9 +17,13 @@ let addproductTransaction = async (req, res) => {
 };
 
 const updateproductTransaction = async (req, res) => {
+  const { productprice, weight } = req.body;
+  let updatedData = {
+    ...req.body,
+    transactionprice: productprice * weight,
+  };
   try {
     const productTransactionId = req.body.producttransactionid; // Get the product ID from the request parameters
-    const updatedData = req.body; // Get the updated product data from the request body
 
     // Find the product by ID and update it
     let result = await productTransactionSchema.findByIdAndUpdate(
@@ -87,6 +91,54 @@ let getproductTransaction = async (req, res) => {
   }
 };
 
+let getTotalBuySellPrice = async (req, res) => {
+  const shopId = req.headers["authorization"];
+
+  try {
+    if (!shopId) {
+      return res.status(400).json({ error: "Shop ID is required" });
+    }
+
+    let totalPrice = await productTransactionSchema.aggregate([
+      {
+        $match: {
+          shopid: shopId // Filter by shopid
+        }
+      },
+      {
+        $group: {
+          _id: null, // No grouping by a specific field
+          totalBuy: {
+            $sum: {
+              $cond: [{ $eq: ["$transactionstatus", 0] }, "$transactionprice", 0]
+            }
+          },
+          totalSell: {
+            $sum: {
+              $cond: [{ $eq: ["$transactionstatus", 1] }, "$transactionprice", 0]
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0, // Exclude _id from the result
+          totalBuy: 1,
+          totalSell: 1
+        }
+      }
+    ]);
+
+    
+
+    const totalBuySell = totalPrice.length > 0 ? totalPrice[0] : 0;
+
+    return res.json( totalBuySell );
+  } catch (error) {
+    console.error("Error fetching total expenses:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
 
 let deleteproductTransaction = async (req, res) => {
   try {
@@ -104,4 +156,5 @@ module.exports = {
   getproductTransaction,
   deleteproductTransaction,
   updateproductTransaction,
+  getTotalBuySellPrice
 };

@@ -20,6 +20,7 @@ const {
   deleteproductTransaction,
   updateproductTransaction,
   addproductTransaction,
+  getTotalBuySellPrice,
 } = require("../controller/product.transaction.controller");
 const { addExpenses, getExpenses, deleteExpenses, updateExpenses, getTotalExpenses } = require("../controller/expenses.controller");
 
@@ -41,6 +42,7 @@ router.post("/addProductTransaction", addproductTransaction);
 router.get("/getProductTransaction", getproductTransaction);
 router.delete("/deleteProductTransaction", deleteproductTransaction);
 router.patch("/updateProductTransaction", updateproductTransaction);
+router.get("/totalbuysellprice",getTotalBuySellPrice)
 
 router.post("/addexpenses", addExpenses);
 router.get("/getexpenses", getExpenses);

@@ -69,7 +69,7 @@ let getTotalExpenses = async (req, res) => {
     let expenses = await Expenses.aggregate([
       {
         $match: {
-          shopid: "66dcac2b568179ae8b727f5a" // Filter by shopid
+          shopid: shopId // Filter by shopid
         }
       },
       {
