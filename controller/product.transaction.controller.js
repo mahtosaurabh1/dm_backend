@@ -48,40 +48,64 @@ let getproductTransaction = async (req, res) => {
   const productName = req.query.productname;
   const transactionStatus = req.query.transactionstatus;
   const deal = req.query.deal;
+  const startdate = req.query.startDate;
+  const enddate = req.query.endDate;
 
   try {
     if (!shopId) {
       return res.status(400).json({ error: "Shop ID is required" });
     }
+
     let filter = { shopid: shopId };
+
+    // Add product name filter if provided
     if (productName) {
       filter.productname = { $regex: productName, $options: "i" }; // Case-insensitive search
     }
+
+    // Add transaction status filter if provided
     if (transactionStatus) {
-      filter.transactionstatus = transactionStatus; 
+      filter.transactionstatus = transactionStatus;
     }
-    if (deal === "deal") {      
+
+    // Add date range filter if both startdate and enddate are provided
+    if (startdate && enddate) {
+      filter.createdAt = {
+        $gte: new Date(startdate),  // greater than or equal to startdate
+        $lte: new Date(enddate),    // less than or equal to enddate
+      };
+    }
+
+    if (deal === "deal") {
+      // Aggregate only if deal is set to "deal"
       let products = await productTransactionSchema.aggregate([
         {
-          $match:{
-            shopid: { $in: [`${shopId}`] }, 
-            transactionstatus:parseInt(transactionStatus)
+          $match: {
+            shopid: shopId,
+            transactionstatus: parseInt(transactionStatus),
+            ...(startdate && enddate && {
+              createdAt: {
+                $gte: new Date(startdate),
+                $lte: new Date(enddate)
+              }
+            })
           }
         },
-         {
+        {
           $group: {
-             _id: "$productid",    
+            _id: "$productid",
             totalWeight: { $sum: "$weight" },
-            totalprice:{$sum:"$transactionprice"},
+            totalprice: { $sum: "$transactionprice" },
             transactionstatus: { $first: "$transactionstatus" },
-            productname:{$first:"$productname"},
-            productid:{$first:"$productid"}
-          }}
+            productname: { $first: "$productname" },
+            productid: { $first: "$productid" }
+          }
+        }
       ]);
 
       return res.send(products.length > 0 ? products : []);
     } else {
-      // Handle the regular product fetch logic
+      // Find documents without aggregation if deal is not "deal"
       let products = await productTransactionSchema.find(filter);
       return res.send(products.length > 0 ? products : []);
     }
@@ -90,6 +114,8 @@ let getproductTransaction = async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+
 
 let getTotalBuySellPrice = async (req, res) => {
   const shopId = req.headers["authorization"];
