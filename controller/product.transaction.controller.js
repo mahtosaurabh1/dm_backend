@@ -119,6 +119,8 @@ let getproductTransaction = async (req, res) => {
 
 let getTotalBuySellPrice = async (req, res) => {
   const shopId = req.headers["authorization"];
+  const startdate = req.query.startDate;
+  const enddate = req.query.endDate;
 
   try {
     if (!shopId) {
@@ -128,7 +130,13 @@ let getTotalBuySellPrice = async (req, res) => {
     let totalPrice = await productTransactionSchema.aggregate([
       {
         $match: {
-          shopid: shopId // Filter by shopid
+          shopid: shopId, // Filter by shopid
+          ...(startdate && enddate && {
+            createdAt: {
+              $gte: new Date(startdate),
+              $lte: new Date(enddate)
+            }
+          })
         }
       },
       {

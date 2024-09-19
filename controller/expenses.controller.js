@@ -35,6 +35,8 @@ const updateExpenses = async (req, res) => {
 let getExpenses = async (req, res) => {
   const shopId = req.headers["authorization"];
   const expensesname = req.query.expensesname;
+  const startdate = req.query.startDate;
+  const enddate = req.query.endDate;
   try {
     if (!shopId) {
       return res.status(400).json({ error: "Shop ID is required" });
@@ -45,6 +47,13 @@ let getExpenses = async (req, res) => {
     if (expensesname) {
       filter.expensesname = { $regex: expensesname, $options: "i" }; // Case-insensitive search
     }
+    if (startdate && enddate) {
+      filter.createdAt = {
+        $gte: new Date(startdate), // greater than or equal to startdate
+        $lte: new Date(enddate), // less than or equal to enddate
+      };
+    }
+
     let expenses = await Expenses.find(filter);
 
     if (expenses.length > 0) {
@@ -60,6 +69,8 @@ let getExpenses = async (req, res) => {
 
 let getTotalExpenses = async (req, res) => {
   const shopId = req.headers["authorization"];
+  const startdate = req.query.startDate;
+  const enddate = req.query.endDate;
 
   try {
     if (!shopId) {
@@ -69,21 +80,27 @@ let getTotalExpenses = async (req, res) => {
     let expenses = await Expenses.aggregate([
       {
         $match: {
-          shopid: shopId // Filter by shopid
-        }
+          shopid: shopId, // Filter by shopid
+          ...(startdate && enddate && {
+            createdAt: {
+              $gte: new Date(startdate),
+              $lte: new Date(enddate)
+            }
+          })
+        },
       },
       {
         $group: {
           _id: null, // No need to group by any field
-          totalExpenses: { $sum: "$expensesprice" } // Sum the expensesprice field
-        }
+          totalExpenses: { $sum: "$expensesprice" }, // Sum the expensesprice field
+        },
       },
       {
         $project: {
           _id: 0, // Exclude _id from the output
-          totalExpenses: 1 // Include totalExpenses in the output
-        }
-      }
+          totalExpenses: 1, // Include totalExpenses in the output
+        },
+      },
     ]);
 
     const totalExpenses = expenses.length > 0 ? expenses[0].totalExpenses : 0;
@@ -94,7 +111,6 @@ let getTotalExpenses = async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
-
 
 let deleteExpenses = async (req, res) => {
   try {
@@ -110,5 +126,5 @@ module.exports = {
   getExpenses,
   deleteExpenses,
   updateExpenses,
-  getTotalExpenses
+  getTotalExpenses,
 };
