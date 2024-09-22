@@ -165,7 +165,7 @@ let getTotalBuySellPrice = async (req, res) => {
 
     
 
-    const totalBuySell = totalPrice.length > 0 ? totalPrice[0] : 0;
+    const totalBuySell = totalPrice.length > 0 ? totalPrice[0] : {totalBuy:0,totalSell:0};
 
     return res.json( totalBuySell );
   } catch (error) {
