@@ -1,5 +1,4 @@
 const mongoose=require('mongoose');
-const atlasUrl = "mongodb+srv://mahtosaurabh1:eCOYsNztl8ps7u61@shopmanagementcluster.87jtk.mongodb.net/data-management?retryWrites=true&w=majority&appName=shopmanagementcluster";
 const localUrl='mongodb://localhost:27017/data-management'
 mongoose.connect(localUrl)
   .then(() => console.log('Connected to DB'))
