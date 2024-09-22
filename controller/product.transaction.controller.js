@@ -181,7 +181,7 @@ let getStockLeft = async (req, res) => {
       return res.status(400).json({ error: "Shop ID is required" });
     }
 
-    let totalPrice = await productTransactionSchema.aggregate([
+    let totalStock = await productTransactionSchema.aggregate([
       {
         $match: {
           shopid: shopId // filter by shop ID, modify as needed
@@ -203,20 +203,22 @@ let getStockLeft = async (req, res) => {
           },
           totalBuyTransactionPrice: {
             $sum: {
-              $cond: [{ $eq: ["$transactionstatus", 0] },  "$transactionprice", 0]
+              $cond: [{ $eq: ["$transactionstatus", 0] }, "$transactionprice", 0]
             }
           },
           totalSellTransactionPrice: {
             $sum: {
               $cond: [{ $eq: ["$transactionstatus", 1] }, "$transactionprice", 0]
             }
-          }
+          },
+          productid: { $first: "$productid" } // capture product ID
         }
       },
       {
         $project: {
           _id: 0,
           productname: 1,
+          productid: 1, // include product ID in the output
           weightLeftInStock: {
             $subtract: ["$totalBuyWeight", "$totalSellWeight"]
           },
@@ -229,9 +231,9 @@ let getStockLeft = async (req, res) => {
 
     
 
-    const totalBuySell = totalPrice.length > 0 ? totalPrice[0] : {totalBuy:0,totalSell:0};
+    const totalStockLeft = totalStock.length > 0 ? totalStock : [];
 
-    return res.json( totalBuySell );
+    return res.json( totalStockLeft );
   } catch (error) {
     console.error("Error fetching total expenses:", error);
     return res.status(500).json({ error: "Internal server error" });
