@@ -173,6 +173,70 @@ let getTotalBuySellPrice = async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+let getStockLeft = async (req, res) => {
+  const shopId = req.headers["authorization"];
+
+  try {
+    if (!shopId) {
+      return res.status(400).json({ error: "Shop ID is required" });
+    }
+
+    let totalPrice = await productTransactionSchema.aggregate([
+      {
+        $match: {
+          shopid: shopId // filter by shop ID, modify as needed
+        }
+      },
+      {
+        $group: {
+          _id: "$productid",
+          productname: { $first: "$productname" }, // get product name
+          totalBuyWeight: {
+            $sum: {
+              $cond: [{ $eq: ["$transactionstatus", 0] }, "$weight", 0]
+            }
+          },
+          totalSellWeight: {
+            $sum: {
+              $cond: [{ $eq: ["$transactionstatus", 1] }, "$weight", 0]
+            }
+          },
+          totalBuyTransactionPrice: {
+            $sum: {
+              $cond: [{ $eq: ["$transactionstatus", 0] },  "$transactionprice", 0]
+            }
+          },
+          totalSellTransactionPrice: {
+            $sum: {
+              $cond: [{ $eq: ["$transactionstatus", 1] }, "$transactionprice", 0]
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          productname: 1,
+          weightLeftInStock: {
+            $subtract: ["$totalBuyWeight", "$totalSellWeight"]
+          },
+          avgTransactionPriceForStock: {
+            $subtract: ["$totalBuyTransactionPrice", "$totalSellTransactionPrice"]
+          }
+        }
+      }
+    ]);
+
+    
+
+    const totalBuySell = totalPrice.length > 0 ? totalPrice[0] : {totalBuy:0,totalSell:0};
+
+    return res.json( totalBuySell );
+  } catch (error) {
+    console.error("Error fetching total expenses:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
 
 let deleteproductTransaction = async (req, res) => {
   try {
@@ -190,5 +254,6 @@ module.exports = {
   getproductTransaction,
   deleteproductTransaction,
   updateproductTransaction,
-  getTotalBuySellPrice
+  getTotalBuySellPrice,
+  getStockLeft
 };
